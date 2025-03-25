@@ -10,12 +10,39 @@
     <div class="left-panel">
       <div id="toolbar">
         <h1>Draw</h1>
-        <label for="stroke">Stroke</label>
-        <input id="stroke" name="stroke" type="color" value="#FFFFFF" />
-        <label>Line width</label>
-        <input id="lineWidth" name="lineWidth" type="number" value="1" />
-        <button id="clear">Clear</button>
-        <label for="imageInput">Upload Images</label>
+
+        <!-- Stroke Color Picker -->
+        <label for="stroke">Color</label>
+        <div class="color-picker-wrapper">
+          <div
+            id="colorDisplay"
+            class="color-display"
+            style="background-color: #ffffff"
+          ></div>
+          <input
+            id="stroke"
+            name="stroke"
+            type="color"
+            value="#FFFFFF"
+            class="hidden-color-input"
+          />
+        </div>
+
+        <!-- Line Width -->
+        <label for="lineWidth">Width</label>
+        <input
+          id="lineWidth"
+          name="lineWidth"
+          type="number"
+          value="2"
+          min="1"
+          max="50"
+        />
+
+        <button id="clear">Clear Canvas</button>
+
+        <!-- Image Upload -->
+        <label for="imageInput">Images</label>
         <input type="file" id="imageInput" accept="image/*" multiple />
       </div>
       <div class="image-list" id="imageList"></div>

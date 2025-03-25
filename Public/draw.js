@@ -4,24 +4,28 @@ const context = canvas.getContext("2d", { willReadFrequently: true });
 const toolbar = document.getElementById("toolbar");
 const imageInput = document.getElementById("imageInput");
 const imageList = document.getElementById("imageList");
+const colorInput = document.getElementById("stroke");
+const colorDisplay = document.getElementById("colorDisplay");
 
 // Canvas initialization
 canvas.width = canvas.clientWidth;
 canvas.height = canvas.clientHeight;
-document.getElementById("stroke").value = "#FFFFFF";
+colorInput.value = "#FFFFFF";
 context.strokeStyle = "#FFFFFF";
 
 // State variables
 let isPainting = false;
 let isDragging = false;
 let isResizing = false;
-let lineWidth = 1;
+let lineWidth = 2;
+let currentColor = "#FFFFFF";
 let draggedImage = null;
 let resizeCorner = null;
 let offsetX, offsetY;
 let hoveredImage = null;
 let hoverTimeout = null;
 let showLockIcon = false;
+let nextImageId = 1;
 
 // Data storage
 let strokes = [];
@@ -48,7 +52,7 @@ function handlePaste(event) {
       const file = items[i].getAsFile();
       addImageToListAndCanvas(file);
       event.preventDefault();
-      break; // Handle only the first image
+      break;
     }
   }
 }
@@ -56,8 +60,10 @@ function handlePaste(event) {
 function addImageToListAndCanvas(file) {
   const reader = new FileReader();
   reader.onload = (e) => {
+    const imageId = nextImageId++;
     const imageContainer = document.createElement("div");
     imageContainer.className = "image-container";
+    imageContainer.dataset.imageId = imageId;
 
     const img = document.createElement("img");
     img.src = e.target.result;
@@ -68,6 +74,7 @@ function addImageToListAndCanvas(file) {
       imageObj.src = img.src;
       imageObj.onload = () => {
         draggableImages.push({
+          id: imageId,
           image: imageObj,
           x: 50,
           y: 50,
@@ -84,9 +91,7 @@ function addImageToListAndCanvas(file) {
     removeBtn.textContent = "×";
     removeBtn.onclick = () => {
       imageContainer.remove();
-      draggableImages = draggableImages.filter(
-        (di) => di.image.src !== img.src
-      );
+      draggableImages = draggableImages.filter((di) => di.id !== imageId);
       redrawCanvas();
     };
 
@@ -94,11 +99,11 @@ function addImageToListAndCanvas(file) {
     imageContainer.appendChild(removeBtn);
     imageList.appendChild(imageContainer);
 
-    // Add to canvas immediately
     const imageObj = new Image();
     imageObj.src = e.target.result;
     imageObj.onload = () => {
       draggableImages.push({
+        id: imageId,
         image: imageObj,
         x: 50,
         y: 50,
@@ -116,10 +121,11 @@ function saveStroke() {
   if (currentStroke.length > 0) {
     strokes.push({
       path: [...currentStroke],
-      color: context.strokeStyle,
+      color: currentColor,
       width: lineWidth,
     });
     currentStroke = [];
+    redrawCanvas();
   }
 }
 
@@ -137,7 +143,6 @@ function redrawCanvas() {
   draggableImages.forEach((img) => {
     context.drawImage(img.image, img.x, img.y, img.width, img.height);
 
-    // Draw lock icon if hovered for 1.5s
     if (img === hoveredImage && showLockIcon) {
       context.fillStyle = img.locked
         ? "rgba(255, 0, 0, 0.7)"
@@ -164,22 +169,22 @@ function redrawCanvas() {
       index === 0
         ? context.moveTo(point.x, point.y)
         : context.lineTo(point.x, point.y);
-      context.stroke();
     });
+    context.stroke();
     context.closePath();
   });
 
-  // Draw current stroke in real-time
+  // Draw current stroke if it exists
   if (currentStroke.length > 0) {
     context.beginPath();
-    context.strokeStyle = context.strokeStyle;
+    context.strokeStyle = currentColor;
     context.lineWidth = lineWidth;
     currentStroke.forEach((point, index) => {
       index === 0
         ? context.moveTo(point.x, point.y)
         : context.lineTo(point.x, point.y);
-      context.stroke();
     });
+    context.stroke();
     context.closePath();
   }
 }
@@ -227,16 +232,36 @@ document.addEventListener("paste", handlePaste);
 toolbar.addEventListener("click", (e) => {
   if (e.target.id === "clear") {
     strokes = [];
-    draggableImages = [];
-    imageList.innerHTML = "";
+    // draggableImages = [];
+    // imageList.innerHTML = "";
+    nextImageId = 1;
     redrawCanvas();
   }
 });
 
 toolbar.addEventListener("change", (e) => {
-  if (e.target.id === "stroke") context.strokeStyle = e.target.value;
-  if (e.target.id === "lineWidth") lineWidth = parseInt(e.target.value, 10);
+  if (e.target.id === "stroke") {
+    currentColor = e.target.value;
+    context.strokeStyle = currentColor;
+    colorDisplay.style.backgroundColor = currentColor;
+  }
+  if (e.target.id === "lineWidth") {
+    lineWidth = parseInt(e.target.value, 10);
+  }
 });
+
+// Color picker interaction
+colorDisplay.addEventListener("click", () => {
+  colorInput.click();
+});
+colorInput.addEventListener("input", (e) => {
+  currentColor = e.target.value;
+  context.strokeStyle = currentColor;
+  colorDisplay.style.backgroundColor = currentColor;
+});
+
+// Initial color sync
+colorDisplay.style.backgroundColor = colorInput.value;
 
 let rect = canvas.getBoundingClientRect();
 window.addEventListener("resize", updateCanvasSize);
@@ -248,7 +273,6 @@ canvas.addEventListener("mousedown", (e) => {
   for (let i = draggableImages.length - 1; i >= 0; i--) {
     const img = draggableImages[i];
 
-    // Check if clicking the lock area
     const lockX = img.x + img.width - LOCK_SIZE - 5;
     const lockY = img.y + 5;
     if (
@@ -293,16 +317,14 @@ canvas.addEventListener("mousedown", (e) => {
   }
 
   isPainting = true;
-  context.beginPath();
-  context.moveTo(x, y);
-  currentStroke.push({ x, y });
+  currentStroke = [{ x, y }];
+  redrawCanvas();
 });
 
 canvas.addEventListener("mouseup", () => {
   if (isPainting) {
     isPainting = false;
     saveStroke();
-    context.beginPath();
   }
   if (isDragging || isResizing) {
     isDragging = false;
@@ -316,7 +338,6 @@ canvas.addEventListener("mouseup", () => {
 canvas.addEventListener("mousemove", (e) => {
   const { x, y } = getMousePos(e);
 
-  // Check for hover
   let newHoveredImage = null;
   for (let i = draggableImages.length - 1; i >= 0; i--) {
     const img = draggableImages[i];
@@ -375,10 +396,6 @@ canvas.addEventListener("mousemove", (e) => {
     draggedImage.height = Math.max(draggedImage.height, 20);
     redrawCanvas();
   } else if (isPainting) {
-    context.lineWidth = lineWidth;
-    context.lineCap = "round";
-    context.lineTo(x, y);
-    context.stroke();
     currentStroke.push({ x, y });
     redrawCanvas();
   }
@@ -389,6 +406,10 @@ canvas.addEventListener("mouseleave", () => {
   hoveredImage = null;
   showLockIcon = false;
   redrawCanvas();
+  if (isPainting) {
+    isPainting = false;
+    saveStroke();
+  }
 });
 
 document.addEventListener("keydown", (e) => {
