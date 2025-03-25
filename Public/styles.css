@@ -5,33 +5,17 @@ body {
   height: 100vh;
   overflow: hidden;
   display: flex;
-  justify-content: center;
-  align-items: center;
   background-color: #121212;
   color: white;
   font-family: Arial, sans-serif;
 }
 
-/* Gradient Heading */
-h1 {
-  background: linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-size: 24px;
-  text-align: center;
-  margin-bottom: 10px;
-}
-
-/* Main Container */
-.container {
+/* Left Panel */
+.left-panel {
   display: flex;
-  height: 90vh;
-  width: 90vw;
-  max-width: 1200px;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  flex-direction: column;
+  height: 100vh;
+  background-color: #1e1e1e;
 }
 
 /* Toolbar (Sidebar) */
@@ -43,21 +27,34 @@ h1 {
   padding: 15px;
   width: 80px;
   background-color: #1e1e1e;
-  border-right: 2px solid #2c2c2c;
+  border-bottom: 2px solid #2c2c2c;
 }
 
+/* Toolbar Elements */
 #toolbar label {
   font-size: 12px;
   text-align: center;
 }
 
-#toolbar input {
+#toolbar input[type="color"],
+#toolbar input[type="number"] {
   width: 100%;
   border: none;
   border-radius: 4px;
   padding: 4px;
   background: #333;
   color: white;
+}
+
+#toolbar input[type="file"] {
+  width: 100%;
+  padding: 4px;
+  font-size: 12px;
+  background: #333;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
 }
 
 /* Button Styling */
@@ -75,6 +72,89 @@ h1 {
   background-color: #1e88e5;
 }
 
+/* Image List */
+.image-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 5px;
+  width: 80px;
+  flex: 1;
+}
+
+.image-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.image-list::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 2px;
+}
+
+.image-list::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.image-list {
+  scrollbar-width: thin;
+  scrollbar-color: #444 #1e1e1e;
+}
+
+.image-container {
+  position: relative;
+  margin: 5px 0;
+}
+
+.image-container img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+  background: rgba(255, 0, 0, 0.8);
+  border: none;
+  border-radius: 50%;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  padding: 0;
+}
+
+.remove-btn:hover {
+  background: rgba(255, 0, 0, 1);
+}
+
+/* Gradient Heading */
+h1 {
+  background: linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Main Container */
+.container {
+  flex: 1;
+  height: 100vh;
+  overflow: hidden;
+}
+
 /* Drawing Board */
 .drawing-board {
   flex: 1;
@@ -82,7 +162,7 @@ h1 {
   justify-content: center;
   align-items: center;
   background-color: #181818;
-  position: relative;
+  height: 100%;
 }
 
 canvas {
