@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="styles.css" />
+    <!-- Add FontAwesome CDN -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
     <title>Draw Board</title>
   </head>
   <body>
@@ -39,6 +44,20 @@
           max="50"
         />
 
+        <!-- Eraser Toggle and Size -->
+        <button id="eraser" title="Eraser">
+          <i class="fas fa-eraser"></i>
+        </button>
+        <label for="eraserSize">Eraser Size</label>
+        <input
+          id="eraserSize"
+          name="eraserSize"
+          type="number"
+          value="10"
+          min="1"
+          max="50"
+        />
+
         <button id="clear">Clear Canvas</button>
 
         <!-- Image Upload -->
@@ -49,6 +68,21 @@
     </div>
     <section class="container">
       <div class="drawing-board">
+        <!-- Page Navigation Bar -->
+        <div id="page-nav">
+          <button id="prev-page" disabled>
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button id="next-page" disabled>
+            <i class="fas fa-chevron-right"></i>
+          </button>
+          <span id="page-info"
+            >Board <span id="current-page">1</span> Of
+            <span id="total-pages">1</span></span
+          >
+          <button id="new-page"><i class="fas fa-plus"></i></button>
+          <button id="delete-page"><i class="fas fa-trash"></i></button>
+        </div>
         <canvas id="drawing-board"></canvas>
       </div>
     </section>

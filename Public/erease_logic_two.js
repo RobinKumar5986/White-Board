@@ -1,3 +1,4 @@
+//Other logic for erasing the lines
 // Core DOM elements
 const canvas = document.getElementById("drawing-board");
 const context = canvas.getContext("2d", { willReadFrequently: true });
@@ -8,14 +9,6 @@ const colorInput = document.getElementById("stroke");
 const colorDisplay = document.getElementById("colorDisplay");
 const eraserButton = document.getElementById("eraser");
 const eraserSizeInput = document.getElementById("eraserSize");
-
-// Page navigation DOM elements
-const prevPageButton = document.getElementById("prev-page");
-const nextPageButton = document.getElementById("next-page");
-const currentPageSpan = document.getElementById("current-page");
-const totalPagesSpan = document.getElementById("total-pages");
-const newPageButton = document.getElementById("new-page");
-const deletePageButton = document.getElementById("delete-page");
 
 // Create eraser preview element
 const eraserPreview = document.createElement("div");
@@ -42,156 +35,18 @@ let offsetX, offsetY;
 let hoveredImage = null;
 let hoverTimeout = null;
 let showLockIcon = false;
+let nextImageId = 1;
 
-// Page management
-let currentPage = 0; // This will still be the index, but we'll use IDs for switching
-let nextPageId = 1; // To generate unique page IDs
-let pages = [
-  {
-    id: nextPageId++, // Assign a unique ID to the first page
-    strokes: [],
-    currentStroke: [],
-    draggableImages: [],
-    nextImageId: 1,
-  },
-];
-
-// Reference to current page's data
-let strokes = pages[currentPage].strokes;
-let currentStroke = pages[currentPage].currentStroke;
-let draggableImages = pages[currentPage].draggableImages;
-let nextImageId = pages[currentPage].nextImageId;
-
-// Constants
+// Data storage
+let strokes = [];
+let currentStroke = [];
+let erasePath = []; // Track eraser movement
+let draggableImages = [];
+let undoStack = [];
 const HANDLE_SIZE = 10;
 const LOCK_SIZE = 16;
 const HOVER_DELAY = 1500;
 
-// Update page navigation UI
-function updatePageNavigation() {
-  currentPageSpan.textContent = currentPage + 1;
-  totalPagesSpan.textContent = pages.length;
-  prevPageButton.disabled = currentPage === 0;
-  nextPageButton.disabled = currentPage === pages.length - 1;
-  deletePageButton.disabled = pages.length === 1; // Disable delete if only one page
-}
-
-// Switch to a specific page by ID
-function switchToPage(pageId) {
-  // Find the index of the page with the given ID
-  const pageIndex = pages.findIndex((page) => page.id === pageId);
-  if (pageIndex === -1) return; // Page not found
-
-  // Save the current state of the current page
-  pages[currentPage].strokes = [...strokes];
-  pages[currentPage].currentStroke = [...currentStroke];
-  pages[currentPage].draggableImages = [...draggableImages];
-  pages[currentPage].nextImageId = nextImageId;
-
-  // Switch to the new page
-  currentPage = pageIndex;
-
-  // Update the global state variables with the new page's data
-  strokes = pages[currentPage].strokes || [];
-  currentStroke = pages[currentPage].currentStroke || [];
-  draggableImages = pages[currentPage].draggableImages || [];
-  nextImageId = pages[currentPage].nextImageId || 1;
-
-  // Clear the image list and repopulate with the current page's images
-  imageList.innerHTML = "";
-  draggableImages.forEach((img) => {
-    const imageContainer = document.createElement("div");
-    imageContainer.className = "image-container";
-    imageContainer.dataset.imageId = img.id;
-
-    const imgElement = document.createElement("img");
-    imgElement.src = img.image.src;
-
-    imgElement.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      const imageObj = new Image();
-      imageObj.src = imgElement.src;
-      imageObj.onload = () => {
-        draggableImages.push({
-          id: img.id,
-          image: imageObj,
-          x: 50,
-          y: 50,
-          width: 106,
-          height: 118,
-          locked: false,
-        });
-        pages[currentPage].draggableImages = draggableImages;
-        redrawCanvas();
-      };
-    });
-
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "remove-btn";
-    removeBtn.textContent = "×";
-    removeBtn.onclick = () => {
-      imageContainer.remove();
-      draggableImages = draggableImages.filter((di) => di.id !== img.id);
-      pages[currentPage].draggableImages = draggableImages;
-      redrawCanvas();
-    };
-
-    imageContainer.appendChild(imgElement);
-    imageContainer.appendChild(removeBtn);
-    imageList.appendChild(imageContainer);
-  });
-
-  // Redraw the canvas with the new page's content
-  redrawCanvas();
-  updatePageNavigation();
-}
-
-// Create a new page
-function createNewPage() {
-  const newPage = {
-    id: nextPageId++, // Assign a unique ID to the new page
-    strokes: [],
-    currentStroke: [],
-    draggableImages: [],
-    nextImageId: 1,
-  };
-  pages.push(newPage);
-  // Switch to the new page using its ID
-  switchToPage(newPage.id);
-}
-
-// Delete the current page
-function deleteCurrentPage() {
-  if (pages.length <= 1) return; // Don't delete if there's only one page
-
-  // Step 1: Collect the ID to switch to
-  let targetPageId;
-  if (currentPage === pages.length - 1) {
-    // If on the last page, switch to the previous page
-    targetPageId = pages[currentPage - 1].id;
-  } else {
-    // If not on the last page, switch to the next page
-    targetPageId = pages[currentPage + 1].id;
-  }
-
-  // Step 2: Collect the current page index
-  const pageToDeleteIndex = currentPage;
-
-  // Step 3: Move to the page with the target ID
-  switchToPage(targetPageId);
-
-  // Step 4: Remove the page at the original index
-  pages.splice(pageToDeleteIndex, 1);
-
-  // Step 5: Adjust currentPage to account for the index shift
-  // If the deleted page was before the current page, the current page's index shifts down
-  if (pageToDeleteIndex < currentPage) {
-    currentPage--;
-  }
-
-  // Step 6: Update the top bar for 0 to n-1
-  updatePageNavigation();
-}
 // Event Handlers
 function handleImageUpload(event) {
   Array.from(event.target.files).forEach((file) => {
@@ -239,7 +94,6 @@ function addImageToListAndCanvas(file) {
           height: 118,
           locked: false,
         });
-        pages[currentPage].draggableImages = draggableImages;
         redrawCanvas();
       };
     });
@@ -249,8 +103,7 @@ function addImageToListAndCanvas(file) {
     removeBtn.textContent = "×";
     removeBtn.onclick = () => {
       imageContainer.remove();
-      draggableImages = draggableImages.filter((di) => di.id !== img.id);
-      pages[currentPage].draggableImages = draggableImages;
+      draggableImages = draggableImages.filter((di) => di.id !== imageId);
       redrawCanvas();
     };
 
@@ -270,7 +123,6 @@ function addImageToListAndCanvas(file) {
         height: 118,
         locked: false,
       });
-      pages[currentPage].draggableImages = draggableImages;
       redrawCanvas();
     };
   };
@@ -281,20 +133,41 @@ function saveStroke() {
   if (currentStroke.length > 0) {
     strokes.push({
       path: [...currentStroke],
-      color: isErasing ? "erase" : currentColor,
-      width: isErasing ? eraserSize : lineWidth,
+      color: currentColor,
+      width: lineWidth,
     });
+    undoStack.push({ type: "draw", stroke: strokes[strokes.length - 1] });
     currentStroke = [];
-    pages[currentPage].strokes = strokes;
-    pages[currentPage].currentStroke = currentStroke;
     redrawCanvas();
   }
 }
 
+function saveErase() {
+  if (erasePath.length > 0) {
+    const previousStrokes = strokes.map((stroke) => ({
+      ...stroke,
+      path: [...stroke.path],
+    }));
+    undoStack.push({
+      type: "erase",
+      previousStrokes,
+      erasePath: [...erasePath],
+    });
+    erasePath = [];
+  }
+}
+
 function undoLast() {
-  if (strokes.length > 0) {
-    strokes.pop();
-    pages[currentPage].strokes = strokes;
+  if (undoStack.length > 0) {
+    const lastAction = undoStack.pop();
+    if (lastAction.type === "draw") {
+      strokes.pop();
+    } else if (lastAction.type === "erase") {
+      strokes = lastAction.previousStrokes.map((stroke) => ({
+        ...stroke,
+        path: [...stroke.path],
+      }));
+    }
     redrawCanvas();
   }
 }
@@ -302,7 +175,7 @@ function undoLast() {
 function redrawCanvas() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw images and lock icons
+  // Draw images first
   draggableImages.forEach((img) => {
     context.drawImage(img.image, img.x, img.y, img.width, img.height);
 
@@ -325,42 +198,23 @@ function redrawCanvas() {
 
   // Draw all saved strokes
   strokes.forEach((stroke) => {
-    if (stroke.color === "erase") {
-      context.globalCompositeOperation = "destination-out";
-      context.beginPath();
-      context.lineWidth = stroke.width;
-      stroke.path.forEach((point, index) => {
-        index === 0
-          ? context.moveTo(point.x, point.y)
-          : context.lineTo(point.x, point.y);
-      });
-      context.stroke();
-      context.closePath();
-      context.globalCompositeOperation = "source-over";
-    } else {
-      context.beginPath();
-      context.strokeStyle = stroke.color;
-      context.lineWidth = stroke.width;
-      stroke.path.forEach((point, index) => {
-        index === 0
-          ? context.moveTo(point.x, point.y)
-          : context.lineTo(point.x, point.y);
-      });
-      context.stroke();
-      context.closePath();
-    }
+    context.beginPath();
+    context.strokeStyle = stroke.color;
+    context.lineWidth = stroke.width;
+    stroke.path.forEach((point, index) => {
+      index === 0
+        ? context.moveTo(point.x, point.y)
+        : context.lineTo(point.x, point.y);
+    });
+    context.stroke();
+    context.closePath();
   });
 
   // Draw current stroke if it exists
   if (currentStroke.length > 0) {
     context.beginPath();
-    if (isErasing) {
-      context.globalCompositeOperation = "destination-out";
-      context.lineWidth = eraserSize;
-    } else {
-      context.strokeStyle = currentColor;
-      context.lineWidth = lineWidth;
-    }
+    context.strokeStyle = currentColor;
+    context.lineWidth = lineWidth;
     currentStroke.forEach((point, index) => {
       index === 0
         ? context.moveTo(point.x, point.y)
@@ -368,13 +222,11 @@ function redrawCanvas() {
     });
     context.stroke();
     context.closePath();
-    context.globalCompositeOperation = "source-over";
   }
 }
 
 // Utility Functions
 function getMousePos(e) {
-  const rect = canvas.getBoundingClientRect();
   return {
     x: e.clientX - rect.left,
     y: e.clientY - rect.top,
@@ -404,7 +256,7 @@ function updateCanvasSize() {
   const currentStrokeStyle = context.strokeStyle;
   canvas.width = canvas.clientWidth;
   canvas.height = canvas.clientHeight;
-  const rect = canvas.getBoundingClientRect();
+  rect = canvas.getBoundingClientRect();
   context.strokeStyle = currentStrokeStyle;
   redrawCanvas();
 }
@@ -425,35 +277,77 @@ function updateEraserPreview(e) {
   }
 }
 
+function eraseAtPoint(x, y) {
+  erasePath.push({ x, y });
+  const eraserRadius = eraserSize / 2;
+
+  strokes = strokes
+    .map((stroke) => {
+      const newPath = [];
+      let currentSegment = [];
+      let modified = false;
+
+      for (let i = 0; i < stroke.path.length; i++) {
+        const point = stroke.path[i];
+        const prevPoint = i > 0 ? stroke.path[i - 1] : null;
+
+        if (prevPoint) {
+          const distance = pointDistanceToSegment({ x, y }, prevPoint, point);
+          if (distance <= eraserRadius + stroke.width / 2) {
+            if (currentSegment.length > 1) {
+              newPath.push(...currentSegment);
+            }
+            currentSegment = [];
+            modified = true;
+          } else {
+            currentSegment.push(point);
+          }
+        } else {
+          currentSegment.push(point);
+        }
+      }
+
+      if (currentSegment.length > 1) {
+        newPath.push(...currentSegment);
+      }
+
+      return { ...stroke, path: newPath };
+    })
+    .filter((stroke) => stroke.path.length > 1);
+
+  redrawCanvas();
+}
+
+function pointDistanceToSegment(point, lineStart, lineEnd) {
+  const dx = lineEnd.x - lineStart.x;
+  const dy = lineEnd.y - lineStart.y;
+  const lenSquared = dx * dx + dy * dy;
+
+  if (lenSquared === 0) {
+    return Math.sqrt(
+      (point.x - lineStart.x) ** 2 + (point.y - lineStart.y) ** 2
+    );
+  }
+
+  let t =
+    ((point.x - lineStart.x) * dx + (point.y - lineStart.y) * dy) / lenSquared;
+  t = Math.max(0, Math.min(1, t));
+
+  const nearestX = lineStart.x + t * dx;
+  const nearestY = lineStart.y + t * dy;
+
+  return Math.sqrt((point.x - nearestX) ** 2 + (point.y - nearestY) ** 2);
+}
+
 // Event Listeners
 imageInput.addEventListener("change", handleImageUpload);
 document.addEventListener("paste", handlePaste);
 
-// Page navigation event listeners
-prevPageButton.addEventListener("click", () => {
-  if (currentPage > 0) {
-    switchToPage(pages[currentPage - 1].id);
-  }
-});
-nextPageButton.addEventListener("click", () => {
-  if (currentPage < pages.length - 1) {
-    switchToPage(pages[currentPage + 1].id);
-  }
-});
-newPageButton.addEventListener("click", createNewPage);
-deletePageButton.addEventListener("click", deleteCurrentPage);
-
 toolbar.addEventListener("click", (e) => {
   if (e.target.id === "clear" || e.target.parentElement.id === "clear") {
     strokes = [];
-    currentStroke = [];
-    // draggableImages = [];
+    undoStack = [];
     nextImageId = 1;
-    pages[currentPage].strokes = strokes;
-    pages[currentPage].currentStroke = currentStroke;
-    pages[currentPage].draggableImages = draggableImages;
-    pages[currentPage].nextImageId = nextImageId;
-    imageList.innerHTML = "";
     redrawCanvas();
   }
   if (e.target.id === "eraser" || e.target.parentElement.id === "eraser") {
@@ -549,14 +443,23 @@ canvas.addEventListener("mousedown", (e) => {
   }
 
   isPainting = true;
-  currentStroke = [{ x, y }];
+  if (isErasing) {
+    erasePath = [{ x, y }];
+    eraseAtPoint(x, y);
+  } else {
+    currentStroke = [{ x, y }];
+  }
   redrawCanvas();
 });
 
 canvas.addEventListener("mouseup", () => {
   if (isPainting) {
     isPainting = false;
-    saveStroke();
+    if (isErasing) {
+      saveErase();
+    } else {
+      saveStroke();
+    }
   }
   if (isDragging || isResizing) {
     isDragging = false;
@@ -629,8 +532,12 @@ canvas.addEventListener("mousemove", (e) => {
     draggedImage.height = Math.max(draggedImage.height, 20);
     redrawCanvas();
   } else if (isPainting) {
-    currentStroke.push({ x, y });
-    redrawCanvas();
+    if (isErasing) {
+      eraseAtPoint(x, y);
+    } else {
+      currentStroke.push({ x, y });
+      redrawCanvas();
+    }
   }
 });
 
@@ -642,7 +549,11 @@ canvas.addEventListener("mouseleave", () => {
   redrawCanvas();
   if (isPainting) {
     isPainting = false;
-    saveStroke();
+    if (isErasing) {
+      saveErase();
+    } else {
+      saveStroke();
+    }
   }
 });
 
@@ -658,6 +569,3 @@ document.addEventListener("keydown", (e) => {
     undoLast();
   }
 });
-
-// Initial page navigation setup
-updatePageNavigation();
