@@ -44,11 +44,11 @@ let hoverTimeout = null;
 let showLockIcon = false;
 
 // Page management
-let currentPage = 0; // This will still be the index, but we'll use IDs for switching
-let nextPageId = 1; // To generate unique page IDs
+let currentPage = 0;
+let nextPageId = 1;
 let pages = [
   {
-    id: nextPageId++, // Assign a unique ID to the first page
+    id: nextPageId++,
     strokes: [],
     currentStroke: [],
     draggableImages: [],
@@ -73,31 +73,26 @@ function updatePageNavigation() {
   totalPagesSpan.textContent = pages.length;
   prevPageButton.disabled = currentPage === 0;
   nextPageButton.disabled = currentPage === pages.length - 1;
-  deletePageButton.disabled = pages.length === 1; // Disable delete if only one page
+  deletePageButton.disabled = pages.length === 1;
 }
 
 // Switch to a specific page by ID
 function switchToPage(pageId) {
-  // Find the index of the page with the given ID
   const pageIndex = pages.findIndex((page) => page.id === pageId);
-  if (pageIndex === -1) return; // Page not found
+  if (pageIndex === -1) return;
 
-  // Save the current state of the current page
   pages[currentPage].strokes = [...strokes];
   pages[currentPage].currentStroke = [...currentStroke];
   pages[currentPage].draggableImages = [...draggableImages];
   pages[currentPage].nextImageId = nextImageId;
 
-  // Switch to the new page
   currentPage = pageIndex;
 
-  // Update the global state variables with the new page's data
   strokes = pages[currentPage].strokes || [];
   currentStroke = pages[currentPage].currentStroke || [];
   draggableImages = pages[currentPage].draggableImages || [];
   nextImageId = pages[currentPage].nextImageId || 1;
 
-  // Clear the image list and repopulate with the current page's images
   imageList.innerHTML = "";
   draggableImages.forEach((img) => {
     const imageContainer = document.createElement("div");
@@ -141,7 +136,6 @@ function switchToPage(pageId) {
     imageList.appendChild(imageContainer);
   });
 
-  // Redraw the canvas with the new page's content
   redrawCanvas();
   updatePageNavigation();
 }
@@ -149,49 +143,40 @@ function switchToPage(pageId) {
 // Create a new page
 function createNewPage() {
   const newPage = {
-    id: nextPageId++, // Assign a unique ID to the new page
+    id: nextPageId++,
     strokes: [],
     currentStroke: [],
     draggableImages: [],
     nextImageId: 1,
   };
   pages.push(newPage);
-  // Switch to the new page using its ID
   switchToPage(newPage.id);
 }
 
 // Delete the current page
 function deleteCurrentPage() {
-  if (pages.length <= 1) return; // Don't delete if there's only one page
+  if (pages.length <= 1) return;
 
-  // Step 1: Collect the ID to switch to
   let targetPageId;
   if (currentPage === pages.length - 1) {
-    // If on the last page, switch to the previous page
     targetPageId = pages[currentPage - 1].id;
   } else {
-    // If not on the last page, switch to the next page
     targetPageId = pages[currentPage + 1].id;
   }
 
-  // Step 2: Collect the current page index
   const pageToDeleteIndex = currentPage;
 
-  // Step 3: Move to the page with the target ID
   switchToPage(targetPageId);
 
-  // Step 4: Remove the page at the original index
   pages.splice(pageToDeleteIndex, 1);
 
-  // Step 5: Adjust currentPage to account for the index shift
-  // If the deleted page was before the current page, the current page's index shifts down
   if (pageToDeleteIndex < currentPage) {
     currentPage--;
   }
 
-  // Step 6: Update the top bar for 0 to n-1
   updatePageNavigation();
 }
+
 // Event Handlers
 function handleImageUpload(event) {
   Array.from(event.target.files).forEach((file) => {
@@ -249,7 +234,9 @@ function addImageToListAndCanvas(file) {
     removeBtn.textContent = "×";
     removeBtn.onclick = () => {
       imageContainer.remove();
-      draggableImages = draggableImages.filter((di) => di.id !== img.id);
+      draggableImages = draggableImages.filter(
+        (di) => di.id !== Number(imageContainer.dataset.imageId)
+      );
       pages[currentPage].draggableImages = draggableImages;
       redrawCanvas();
     };
@@ -302,7 +289,6 @@ function undoLast() {
 function redrawCanvas() {
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Draw images and lock icons
   draggableImages.forEach((img) => {
     context.drawImage(img.image, img.x, img.y, img.width, img.height);
 
@@ -323,7 +309,6 @@ function redrawCanvas() {
     }
   });
 
-  // Draw all saved strokes
   strokes.forEach((stroke) => {
     if (stroke.color === "erase") {
       context.globalCompositeOperation = "destination-out";
@@ -351,7 +336,6 @@ function redrawCanvas() {
     }
   });
 
-  // Draw current stroke if it exists
   if (currentStroke.length > 0) {
     context.beginPath();
     if (isErasing) {
@@ -447,13 +431,11 @@ toolbar.addEventListener("click", (e) => {
   if (e.target.id === "clear" || e.target.parentElement.id === "clear") {
     strokes = [];
     currentStroke = [];
-    // draggableImages = [];
     nextImageId = 1;
     pages[currentPage].strokes = strokes;
     pages[currentPage].currentStroke = currentStroke;
     pages[currentPage].draggableImages = draggableImages;
     pages[currentPage].nextImageId = nextImageId;
-    imageList.innerHTML = "";
     redrawCanvas();
   }
   if (e.target.id === "eraser" || e.target.parentElement.id === "eraser") {
