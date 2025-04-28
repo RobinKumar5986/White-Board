@@ -32,9 +32,9 @@ Get up and running with Draw-Board in just a few steps!
 ### Installation
 
 1. Clone the repository:
-   ```bash
-   https://github.com/RobinKumar5986/White-Board
-   ```
+```bash
+https://github.com/RobinKumar5986/White-Board
+```
 2. Install dependencies
 
 ```bash
