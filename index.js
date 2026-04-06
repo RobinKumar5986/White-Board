@@ -11,7 +11,7 @@ const io = new Server(server);
 app.use(express.static(path.resolve("./Public")));
 
 app.get('/', (req, res) => {
-    res.sendFile(path.resolve("./Public/index.html"));
+    res.sendFile(path.resolve("./index.html"));
 });
 server.listen(3000, () => {
     console.log("Server Started at 3000");
