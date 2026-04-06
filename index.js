@@ -8,7 +8,7 @@ const path = require('path');
 const { Server } = require('socket.io');
 const io = new Server(server);
 
-app.use(express.static(path.resolve("./Public")));
+app.use(express.static(path.resolve("./")));
 
 app.get('/', (req, res) => {
     res.sendFile(path.resolve("./index.html"));
