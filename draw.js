@@ -359,6 +359,21 @@ function redrawCanvas() {
 // Utility Functions
 function getMousePos(e) {
   const rect = canvas.getBoundingClientRect();
+  // Touch event
+  if (e.touches && e.touches.length > 0) {
+    return {
+      x: e.touches[0].clientX - rect.left,
+      y: e.touches[0].clientY - rect.top,
+    };
+  }
+  // touchend / touchcancel (no active touches, use changedTouches)
+  if (e.changedTouches && e.changedTouches.length > 0) {
+    return {
+      x: e.changedTouches[0].clientX - rect.left,
+      y: e.changedTouches[0].clientY - rect.top,
+    };
+  }
+  // Regular mouse
   return {
     x: e.clientX - rect.left,
     y: e.clientY - rect.top,
@@ -533,6 +548,98 @@ canvas.addEventListener("mousedown", (e) => {
   isPainting = true;
   currentStroke = [{ x, y }];
   redrawCanvas();
+});
+
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault()
+  canvas.dispatchEvent(new MouseEvent("mousedown", { bubbles: false }));
+  const { x, y } = getMousePos(e);
+ 
+  for (let i = draggableImages.length - 1; i >= 0; i--) {
+    const img = draggableImages[i];
+    if (img.locked) continue;
+ 
+    const corner = checkResizeHandle(x, y, img);
+    if (corner) {
+      isResizing = true;
+      draggedImage = img;
+      resizeCorner = corner;
+      return;
+    }
+    if (x >= img.x && x <= img.x + img.width && y >= img.y && y <= img.y + img.height) {
+      isDragging = true;
+      draggedImage = img;
+      offsetX = x - img.x;
+      offsetY = y - img.y;
+      return;
+    }
+  }
+ 
+  isPainting = true;
+  currentStroke = [{ x, y }];
+  redrawCanvas();
+}, { passive: false });
+ 
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+  const { x, y } = getMousePos(e);
+ 
+  if (isDragging && draggedImage && !draggedImage.locked) {
+    draggedImage.x = x - offsetX;
+    draggedImage.y = y - offsetY;
+    redrawCanvas();
+  } else if (isResizing && draggedImage && !draggedImage.locked) {
+    switch (resizeCorner) {
+      case "top-left":
+        draggedImage.width += draggedImage.x - x;
+        draggedImage.height += draggedImage.y - y;
+        draggedImage.x = x;
+        draggedImage.y = y;
+        break;
+      case "top-right":
+        draggedImage.width = x - draggedImage.x;
+        draggedImage.height += draggedImage.y - y;
+        draggedImage.y = y;
+        break;
+      case "bottom-left":
+        draggedImage.width += draggedImage.x - x;
+        draggedImage.x = x;
+        draggedImage.height = y - draggedImage.y;
+        break;
+      case "bottom-right":
+        draggedImage.width = x - draggedImage.x;
+        draggedImage.height = y - draggedImage.y;
+        break;
+    }
+    draggedImage.width = Math.max(draggedImage.width, 20);
+    draggedImage.height = Math.max(draggedImage.height, 20);
+    redrawCanvas();
+  } else if (isPainting) {
+    currentStroke.push({ x, y });
+    redrawCanvas();
+  }
+}, { passive: false });
+ 
+canvas.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  if (isPainting) {
+    isPainting = false;
+    saveStroke();
+  }
+  if (isDragging || isResizing) {
+    isDragging = false;
+    isResizing = false;
+    draggedImage = null;
+    resizeCorner = null;
+  }
+}, { passive: false });
+ 
+canvas.addEventListener("touchcancel", (e) => {
+  isPainting = false;
+  isDragging = false;
+  isResizing = false;
+  draggedImage = null;
+  if (currentStroke.length > 0) saveStroke();
 });
 
 canvas.addEventListener("mouseup", () => {
