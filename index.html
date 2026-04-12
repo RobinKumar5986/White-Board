@@ -4,11 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="styles.css" />
-    <!-- Add FontAwesome CDN -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title>Draw Board</title>
   </head>
   <body>
@@ -16,76 +12,125 @@
       <div id="toolbar">
         <h1>Draw</h1>
 
-        <!-- Stroke Color Picker -->
+        <!-- Color -->
         <label for="stroke">Color</label>
         <div class="color-picker-wrapper">
-          <div
-            id="colorDisplay"
-            class="color-display"
-            style="background-color: #ffffff"
-          ></div>
-          <input
-            id="stroke"
-            name="stroke"
-            type="color"
-            value="#FFFFFF"
-            class="hidden-color-input"
-          />
+          <div id="colorDisplay" class="color-display" style="background-color:#ffffff"></div>
+          <input id="stroke" name="stroke" type="color" value="#FFFFFF" class="hidden-color-input" />
         </div>
 
         <!-- Line Width -->
         <label for="lineWidth">Width</label>
-        <input
-          id="lineWidth"
-          name="lineWidth"
-          type="number"
-          value="2"
-          min="1"
-          max="50"
-        />
+        <input id="lineWidth" name="lineWidth" type="number" value="2" min="1" max="50" />
 
-        <!-- Eraser Toggle and Size -->
-        <button id="eraser" title="Eraser">
-          <i class="fas fa-eraser"></i>
-        </button>
-        <label for="eraserSize">Eraser Size</label>
-        <input
-          id="eraserSize"
-          name="eraserSize"
-          type="number"
-          value="10"
-          min="1"
-          max="50"
-        />
+        <!-- Eraser -->
+        <button id="eraser" title="Eraser"><i class="fas fa-eraser"></i></button>
+        <label for="eraserSize">Eraser</label>
+        <input id="eraserSize" name="eraserSize" type="number" value="10" min="1" max="100" />
 
-        <button id="clear">Clear Canvas</button>
+        <!-- Shapes Button + floating panel -->
+        <button id="shape-btn" title="Shapes"><i class="fas fa-shapes"></i></button>
+        <div id="shape-panel" class="floating-panel">
+          <h3>Shapes</h3>
+          <div class="shape-grid">
+            <button class="shape-btn-item" data-shape="rect" title="Rectangle">
+              <span class="shape-icon"><svg viewBox="0 0 26 20"><rect x="2" y="3" width="22" height="14" rx="1"/></svg></span>
+              Rect
+            </button>
+            <button class="shape-btn-item" data-shape="ellipse" title="Ellipse">
+              <span class="shape-icon"><svg viewBox="0 0 26 20"><ellipse cx="13" cy="10" rx="11" ry="7"/></svg></span>
+              Ellipse
+            </button>
+            <button class="shape-btn-item" data-shape="triangle" title="Triangle">
+              <span class="shape-icon"><svg viewBox="0 0 26 20"><polygon points="13,2 24,18 2,18"/></svg></span>
+              Triangle
+            </button>
+            <button class="shape-btn-item" data-shape="line" title="Line">
+              <span class="shape-icon"><svg viewBox="0 0 26 20"><line x1="2" y1="10" x2="24" y2="10"/></svg></span>
+              Line
+            </button>
+            <button class="shape-btn-item" data-shape="arrow" title="Arrow">
+              <span class="shape-icon"><svg viewBox="0 0 26 20"><line x1="2" y1="10" x2="18" y2="10"/><polygon points="24,10 16,6 16,14" fill="#63b3ed" stroke="#63b3ed"/></svg></span>
+              Arrow
+            </button>
+            <button class="shape-btn-item" data-shape="star" title="Star">
+              <span class="shape-icon"><svg viewBox="0 0 26 20"><polygon points="13,2 15.5,8 22,8 17,12 19,18 13,14 7,18 9,12 4,8 10.5,8"/></svg></span>
+              Star
+            </button>
+            <button class="shape-btn-item" data-shape="diamond" title="Diamond">
+              <span class="shape-icon"><svg viewBox="0 0 26 20"><polygon points="13,1 24,10 13,19 2,10"/></svg></span>
+              Diamond
+            </button>
+          </div>
+        </div>
+
+        <!-- Text Button + floating panel -->
+        <button id="text-btn" title="Text Tool"><i class="fas fa-font"></i></button>
+        <div id="text-panel" class="floating-panel">
+          <h3>Text</h3>
+          <div class="text-panel-body">
+            <label>Content</label>
+            <input type="text" id="text-input" placeholder="Your text…" />
+
+            <label>Font</label>
+            <select id="font-family">
+              <option value="sans-serif">Sans-serif</option>
+              <option value="serif">Serif</option>
+              <option value="monospace">Monospace</option>
+              <option value="cursive">Cursive</option>
+              <option value="Georgia, serif">Georgia</option>
+              <option value="'Courier New', monospace">Courier New</option>
+              <option value="Impact, sans-serif">Impact</option>
+            </select>
+
+            <label>Size (px)</label>
+            <input type="number" id="font-size" value="24" min="8" max="200" />
+
+            <div class="fmt-row">
+              <button class="fmt-btn" id="bold-btn" title="Bold"><b>B</b></button>
+              <button class="fmt-btn" id="italic-btn" title="Italic"><i>I</i></button>
+            </div>
+
+            <button class="add-text-main" id="add-text-btn">
+              <i class="fas fa-plus"></i> Add to Canvas
+            </button>
+            <p class="text-tip">Or click canvas to place &amp; type directly</p>
+          </div>
+        </div>
+
+        <!-- Clear -->
+        <button id="clear" title="Clear Canvas"><i class="fas fa-trash-alt"></i> Clear</button>
 
         <!-- Image Upload -->
         <label for="imageInput">Images</label>
         <input type="file" id="imageInput" accept="image/*" multiple />
       </div>
+
+      <!-- Image list sidebar -->
       <div class="image-list" id="imageList"></div>
     </div>
+
     <section class="container">
       <div class="drawing-board">
-        <!-- Page Navigation Bar -->
+        <!-- Page Navigation -->
         <div id="page-nav">
-          <button id="prev-page" disabled>
-            <i class="fas fa-chevron-left"></i>
-          </button>
-          <button id="next-page" disabled>
-            <i class="fas fa-chevron-right"></i>
-          </button>
-          <span id="page-info"
-            >Board <span id="current-page">1</span> Of
-            <span id="total-pages">1</span></span
-          >
+          <button id="prev-page" disabled><i class="fas fa-chevron-left"></i></button>
+          <button id="next-page" disabled><i class="fas fa-chevron-right"></i></button>
+          <span id="page-info">Board <span id="current-page">1</span> Of <span id="total-pages">1</span></span>
           <button id="new-page"><i class="fas fa-plus"></i></button>
           <button id="delete-page"><i class="fas fa-trash"></i></button>
         </div>
+
         <canvas id="drawing-board"></canvas>
+
+        <!-- Mobile Undo / Redo (visible on small screens) -->
+        <div id="mobile-controls">
+          <button id="mobile-undo" title="Undo" disabled><i class="fas fa-undo"></i></button>
+          <button id="mobile-redo" title="Redo" disabled><i class="fas fa-redo"></i></button>
+        </div>
       </div>
     </section>
+
     <script src="./draw.js"></script>
   </body>
 </html>

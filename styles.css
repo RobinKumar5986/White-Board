@@ -16,6 +16,7 @@ body {
   flex-direction: column;
   height: 100vh;
   background-color: #1e1e1e;
+  position: relative;
 }
 
 /* Toolbar (Sidebar) */
@@ -23,21 +24,23 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 15px;
-  padding: 15px;
+  gap: 12px;
+  padding: 12px 8px;
   width: 80px;
   background-color: #1e1e1e;
   border-bottom: 2px solid #2c2c2c;
+  position: relative;
+  overflow: visible;
+  z-index: 20;
 }
 
-/* Toolbar Elements */
 #toolbar label {
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
   color: #ccc;
 }
 
-/* Color Picker Styling */
+/* Color Picker */
 .color-picker-wrapper {
   position: relative;
   width: 100%;
@@ -47,13 +50,13 @@ body {
 }
 
 .color-display {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px solid #444;
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
 
 .color-display:hover {
@@ -64,22 +67,22 @@ body {
 .hidden-color-input {
   opacity: 0;
   position: absolute;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
 }
 
-/* Other Inputs */
+/* Number Inputs */
 #toolbar input[type="number"] {
   width: 100%;
   border: none;
   border-radius: 4px;
-  padding: 6px;
+  padding: 5px;
   background: #333;
   color: white;
   text-align: center;
   font-size: 12px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
 }
 
 #toolbar input[type="number"]:focus {
@@ -90,7 +93,7 @@ body {
 #toolbar input[type="file"] {
   width: 100%;
   padding: 4px;
-  font-size: 12px;
+  font-size: 11px;
   background: #333;
   border: none;
   border-radius: 4px;
@@ -98,49 +101,179 @@ body {
   cursor: pointer;
 }
 
-/* Button Styling */
+/* Buttons */
 #toolbar button {
   background-color: #1565c0;
   border: none;
   border-radius: 4px;
   color: white;
-  padding: 6px 10px;
+  padding: 6px 8px;
   font-size: 12px;
   cursor: pointer;
   width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 4px;
 }
 
-#toolbar button:hover {
-  background-color: #1e88e5;
-}
+#toolbar button:hover { background-color: #1e88e5; }
+#toolbar button.active { background-color: #e53935; }
+#toolbar button.active:hover { background-color: #f44336; }
 
-#toolbar button.active {
-  background-color: #e53935;
-}
-
-#toolbar button.active:hover {
-  background-color: #f44336;
-}
-
-/* Eraser cursor preview */
-canvas.eraser-active {
-  cursor: none; /* Hide default cursor when erasing */
-}
+/* Eraser cursor */
+canvas.eraser-active { cursor: none; }
 
 .eraser-preview {
-  position: absolute;
+  position: fixed;
   border: 2px solid #fff;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255,255,255,0.2);
   pointer-events: none;
-  z-index: 1000;
+  z-index: 9999;
   display: none;
+  box-sizing: border-box;
+  border-radius: 50%;
+}
+
+/* ─── Shape Panel ─────────────────────────────────────── */
+.floating-panel {
+  position: absolute;
+  left: 90px;
+  top: 0;
+  background: #252525;
+  border: 1px solid #3a3a3a;
+  border-radius: 8px;
+  padding: 10px;
+  width: 180px;
+  box-shadow: 4px 4px 16px rgba(0,0,0,0.5);
+  z-index: 100;
+  display: none;
+}
+
+.floating-panel.open { display: block; }
+
+.floating-panel h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.shape-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.shape-btn-item {
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 6px;
+  color: white;
+  padding: 8px 4px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+}
+
+.shape-btn-item:hover { background: #444; border-color: #1e88e5; }
+
+.shape-icon {
+  width: 28px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shape-icon svg {
+  width: 26px;
+  height: 20px;
+  fill: none;
+  stroke: #63b3ed;
+  stroke-width: 1.5;
+}
+
+/* ─── Text Panel ──────────────────────────────────────── */
+#text-panel {
+  top: 0;
+}
+
+.text-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.text-panel-body label {
+  font-size: 11px;
+  color: #aaa;
+  margin-bottom: 2px;
+}
+
+.text-panel-body input[type="text"],
+.text-panel-body input[type="number"],
+.text-panel-body select {
+  width: 100%;
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: white;
+  padding: 5px;
+  font-size: 12px;
   box-sizing: border-box;
 }
 
-/* Image List */
+.text-panel-body select option { background: #333; }
+
+.fmt-row {
+  display: flex;
+  gap: 6px;
+}
+
+.fmt-btn {
+  flex: 1;
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: white;
+  padding: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  transition: background 0.15s;
+}
+
+.fmt-btn:hover { background: #444; }
+.fmt-btn.active { background: #1565c0; border-color: #1e88e5; }
+
+.add-text-main {
+  background: #1565c0;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  padding: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.add-text-main:hover { background: #1e88e5; }
+
+.text-tip {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  margin-top: 2px;
+}
+
+/* ─── Image List ──────────────────────────────────────── */
 .image-list {
   display: flex;
   flex-direction: column;
@@ -150,25 +283,13 @@ canvas.eraser-active {
   padding: 5px;
   width: 80px;
   flex: 1;
-}
-
-.image-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.image-list::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 2px;
-}
-
-.image-list::-webkit-scrollbar-track {
-  background: #1e1e1e;
-}
-
-.image-list {
   scrollbar-width: thin;
   scrollbar-color: #444 #1e1e1e;
 }
+
+.image-list::-webkit-scrollbar { width: 4px; }
+.image-list::-webkit-scrollbar-thumb { background: #444; border-radius: 2px; }
+.image-list::-webkit-scrollbar-track { background: #1e1e1e; }
 
 .image-container {
   position: relative;
@@ -189,7 +310,7 @@ canvas.eraser-active {
   right: 2px;
   width: 14px;
   height: 14px;
-  background: rgba(255, 0, 0, 0.8);
+  background: rgba(255,0,0,0.8);
   border: none;
   border-radius: 50%;
   color: white;
@@ -201,30 +322,29 @@ canvas.eraser-active {
   padding: 0;
 }
 
-.remove-btn:hover {
-  background: rgba(255, 0, 0, 1);
-}
+.remove-btn:hover { background: rgba(255,0,0,1); }
 
-/* Gradient Heading */
+/* ─── Heading ─────────────────────────────────────────── */
 h1 {
   background: linear-gradient(to right, #91eae4, #86a8e7, #7f7fd5);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  font-size: 24px;
+  font-size: 22px;
   text-align: center;
-  margin-bottom: 10px;
+  margin: 0;
 }
 
-/* Main Container */
+/* ─── Main Container ──────────────────────────────────── */
 .container {
   flex: 1;
   height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
-/* Drawing Board */
 .drawing-board {
+  position: relative;
   flex: 1;
   display: flex;
   justify-content: center;
@@ -238,7 +358,8 @@ canvas {
   height: 100%;
   border-radius: 5px;
 }
-/* Page Navigation Bar */
+
+/* ─── Page Navigation Bar ─────────────────────────────── */
 #page-nav {
   position: absolute;
   top: 10px;
@@ -249,7 +370,7 @@ canvas {
   background-color: #2c2c2c;
   padding: 5px 10px;
   border-radius: 20px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
   z-index: 10;
 }
 
@@ -257,50 +378,28 @@ canvas {
   background-color: #333;
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  margin: 0 5px;
+  width: 28px;
+  height: 28px;
+  margin: 0 3px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   color: #ccc;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
-#page-nav button:disabled {
-  background-color: #222;
-  color: #666;
-  cursor: not-allowed;
-}
-
-#page-nav button:hover:not(:disabled) {
-  background-color: #444;
-  color: #fff;
-}
-
-#page-nav #new-page {
-  background-color: #4caf50;
-  color: white;
-}
-
-#page-nav #new-page:hover {
-  background-color: #45a049;
-}
-
-#page-nav #delete-page {
-  background-color: #f44336;
-  color: white;
-}
-
-#page-nav #delete-page:hover {
-  background-color: #da190b;
-}
+#page-nav button:disabled { background-color: #222; color: #555; cursor: not-allowed; }
+#page-nav button:hover:not(:disabled) { background-color: #444; color: #fff; }
+#page-nav #new-page { background-color: #4caf50; color: white; }
+#page-nav #new-page:hover { background-color: #45a049; }
+#page-nav #delete-page { background-color: #f44336; color: white; }
+#page-nav #delete-page:hover { background-color: #da190b; }
 
 #page-nav #page-info {
-  margin: 0 10px;
-  font-size: 14px;
+  margin: 0 8px;
+  font-size: 13px;
   font-weight: bold;
   color: #ccc;
 }
@@ -308,18 +407,59 @@ canvas {
 #page-nav #current-page,
 #page-nav #total-pages {
   display: inline-block;
-  width: 20px;
+  width: 18px;
   text-align: center;
   color: #fff;
 }
 
-/* Ensure the canvas is positioned below the page navigation bar */
-.drawing-board {
-  position: relative;
-  flex: 1;
+/* ─── Mobile Undo/Redo ────────────────────────────────── */
+#mobile-controls {
+  display: none;
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  z-index: 20;
+  gap: 10px;
+}
+
+#mobile-controls button {
+  background: #2c2c2c;
+  border: 1px solid #444;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  color: #ccc;
+  font-size: 18px;
+  cursor: pointer;
   display: flex;
-  justify-content: center;
   align-items: center;
-  background-color: #181818;
-  height: 100%;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  transition: background 0.2s, color 0.2s;
+}
+
+#mobile-controls button:hover:not(:disabled) { background: #3a3a3a; color: #fff; }
+#mobile-controls button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Show mobile controls on small screens */
+@media (max-width: 600px) {
+  #mobile-controls { display: flex; }
+
+  .left-panel {
+    width: 60px;
+  }
+
+  #toolbar {
+    width: 60px;
+    padding: 8px 4px;
+    gap: 8px;
+  }
+
+  .image-list { width: 60px; }
+
+  h1 { font-size: 16px; }
+
+  #toolbar label { display: none; }
+
+  .floating-panel { left: 68px; width: 160px; }
 }
